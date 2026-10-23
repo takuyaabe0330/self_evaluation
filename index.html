@@ -3,156 +3,156 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>デイリータスク＆セルフポイント採点手帳</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>デイリータスク配分・セルフ採点</title>
+  
+  <!-- ホーム画面追加時の全画面アプリ表示設定 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="タスク採点">
+
   <style>
-    /* スライダーとスムーズアニメーション */
-    input[type=range] {
-      accent-color: #2563eb;
-    }
-    .cal-cell {
-      min-height: 58px;
-      transition: all 0.15s ease-in-out;
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 720px; margin: 20px auto; padding: 0 15px; color: #333; background: #fafafa; }
+    h1 { font-size: 1.3rem; text-align: center; margin-bottom: 20px; }
+    input, select, button { box-sizing: border-box; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; }
+    button { background: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; }
+    .card { background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-top: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+    .hint { font-size: 0.8rem; color: #666; margin-top: 3px; }
+
+    /* 集計バッジ */
+    .stats-container { display: flex; gap: 12px; margin-top: 10px; }
+    .stat-box { flex: 1; background: #eef5ff; border: 1px solid #cce0ff; border-radius: 6px; padding: 10px; text-align: center; }
+    .stat-label { font-size: 0.75rem; color: #555; }
+    .stat-val { font-size: 1.3rem; font-weight: bold; color: #0056b3; }
+
+    /* カレンダー */
+    .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+    .cal-day-label { font-size: 0.75rem; font-weight: bold; color: #777; padding: 4px 0; }
+    .cal-cell { min-height: 56px; background: #fff; border: 1px solid #eee; border-radius: 4px; padding: 2px; font-size: 0.8rem; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; align-items: center; }
+    .cal-cell:hover { background: #f0f7ff; }
+    .cal-cell.empty { background: transparent; border-color: transparent; cursor: default; }
+    .cal-cell.selected { border: 2px solid #007bff; background: #e8f2ff; }
+    .stamp-container { display: flex; flex-direction: column; align-items: center; line-height: 1.1; margin-bottom: 2px; }
+    .cal-stamp { font-size: 1.1rem; }
+    .cal-score-num { font-size: 0.65rem; font-weight: bold; color: #555; }
+
+    /* 配分メーター */
+    .meter-container { margin: 12px 0 16px 0; background: #f1f3f5; border-radius: 6px; padding: 10px; }
+    .meter-header { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; }
+    .progress-bar-bg { background: #e9ecef; border-radius: 4px; height: 8px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; width: 0%; background: #28a745; transition: width 0.2s, background 0.2s; }
+    .progress-bar-fill.over { background: #dc3545; }
+
+    /* タスクカード */
+    .task-card { background: #fdfdfd; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; margin-top: 10px; }
+    .task-top { display: flex; gap: 8px; align-items: center; }
+    .task-name { flex: 1; font-weight: 500; }
+    .task-pts-input { width: 75px; text-align: right; }
+    .del-btn { background: #ff4d4f; color: white; width: 28px; height: 28px; padding: 0; line-height: 28px; border-radius: 4px; font-size: 0.8rem; }
+    .add-btn { background: #4a5568; font-size: 0.85rem; padding: 6px 14px; margin-top: 10px; }
+
+    /* 夜の充足率（固定値ボタン式） */
+    .eval-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed #e2e8f0; font-size: 0.85rem; }
+    .rate-btn-group { display: flex; gap: 4px; }
+    .rate-btn { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-size: 0.8rem; padding: 4px 8px; border-radius: 4px; font-weight: 500; cursor: pointer; }
+    .rate-btn.active { background: #007bff; color: white; border-color: #007bff; font-weight: bold; }
+    .eval-earned { font-weight: bold; color: #28a745; min-width: 70px; text-align: right; font-size: 0.95rem; }
+
+    /* スコア確定バッジ */
+    .score-summary-box { text-align: center; border-radius: 8px; background: #f8fafc; border: 1px solid #cbd5e1; padding: 14px; margin-top: 20px; }
+    .score-badge { font-size: 2.2rem; font-weight: bold; color: #007bff; }
+    .result-stamp { font-size: 2rem; margin-right: 5px; vertical-align: middle; }
+
+    /* バックアップ管理 */
+    .backup-area { display: flex; gap: 8px; align-items: center; justify-content: flex-end; margin-top: 14px; padding-top: 10px; border-top: 1px solid #eee; }
+    .backup-btn { background: #6c757d; font-size: 0.75rem; padding: 4px 10px; }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen p-3 sm:p-6">
-  <div class="max-w-3xl mx-auto space-y-5">
+<body>
 
-    <!-- ヘッダー -->
-    <header class="text-center pt-2 pb-1">
-      <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center justify-center gap-2">
-        <span>🎯</span> デイリータスク＆セルフ採点手帳
-      </h1>
-      <p class="text-xs sm:text-sm text-slate-500 mt-1">
-        朝にタスク配分を設定（上限500pt） ➔ 夜に充足率を入力して実績を確定
-      </p>
-    </header>
+  <h1>🎯 デイリータスク配分・セルフ採点</h1>
 
-    <!-- 集計サマリー & カレンダーカード -->
-    <section class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
-          <span>📅</span> カレンダー & 獲得ポイント累計
-        </h2>
+  <!-- カレンダーカード -->
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="margin: 0;">📅 実績カレンダー & 獲得スコア</h3>
+    </div>
+    
+    <div class="stats-container">
+      <div class="stat-box">
+        <div class="stat-label"><span id="currentMonthLabel">今月</span>の獲得ポイント</div>
+        <div class="stat-val" id="monthTotalScore">0 pt</div>
       </div>
-
-      <!-- 累計ポイントバッジ -->
-      <div class="grid grid-cols-2 gap-3 mb-5">
-        <div class="bg-blue-50/70 border border-blue-100 rounded-xl p-3 text-center">
-          <div class="text-xs text-blue-600 font-semibold" id="currentMonthLabel">今月の獲得ポイント</div>
-          <div class="text-xl sm:text-2xl font-black text-blue-700 mt-0.5" id="monthTotalScore">0 pt</div>
-        </div>
-        <div class="bg-indigo-50/70 border border-indigo-100 rounded-xl p-3 text-center">
-          <div class="text-xs text-indigo-600 font-semibold" id="currentYearLabel">今年の獲得ポイント</div>
-          <div class="text-xl sm:text-2xl font-black text-indigo-700 mt-0.5" id="yearTotalScore">0 pt</div>
-        </div>
+      <div class="stat-box">
+        <div class="stat-label"><span id="currentYearLabel">今年</span>の獲得ポイント</div>
+        <div class="stat-val" id="yearTotalScore">0 pt</div>
       </div>
+    </div>
 
-      <!-- カレンダーナビゲーション -->
-      <div class="flex items-center justify-between px-1 mb-2">
-        <button onclick="changeMonth(-1)" class="px-3 py-1.5 text-sm font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition">◀ 前月</button>
-        <span id="calendarTitle" class="text-base font-bold text-slate-800"></span>
-        <button onclick="changeMonth(1)" class="px-3 py-1.5 text-sm font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition">次月 ▶</button>
+    <div class="calendar-header" style="margin-top: 15px;">
+      <button onclick="changeMonth(-1)" style="padding: 4px 10px;">◀ 前月</button>
+      <strong id="calendarTitle"></strong>
+      <button onclick="changeMonth(1)" style="padding: 4px 10px;">次月 ▶</button>
+    </div>
+    <div class="calendar-grid" id="calendarGrid"></div>
+
+    <div class="backup-area">
+      <span style="font-size: 0.75rem; color: #888;">データ管理:</span>
+      <button class="backup-btn" onclick="exportData()">💾 バックアップ書出</button>
+      <button class="backup-btn" onclick="document.getElementById('importFile').click()">📂 データ読込(復元)</button>
+      <input type="file" id="importFile" style="display:none;" accept=".json" onchange="importData(event)">
+    </div>
+  </div>
+
+  <!-- タスク設定＆採点カード -->
+  <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h3 style="margin: 0;">📝 <span id="selectedDateDisplay"></span> のタスク</h3>
+      <input type="date" id="targetDate" onchange="onDateChange()" style="font-size: 0.85rem;">
+    </div>
+
+    <!-- 配分ポイント管理バー -->
+    <div class="meter-container">
+      <div class="meter-header">
+        <span>朝の配分上限（計 500 pt 以内）</span>
+        <span id="allocCounter">0 / 500 pt</span>
       </div>
-
-      <!-- カレンダーグリッド -->
-      <div class="grid grid-cols-7 gap-1 text-center" id="calendarGrid"></div>
-    </section>
-
-    <!-- タスク登録・評価メインカード -->
-    <main class="bg-white rounded-2xl p-4 sm:p-6 shadow-sm border border-slate-200 space-y-6">
-      
-      <!-- 日付選択 & 現在ステータス -->
-      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
-        <div>
-          <span class="text-xs font-bold text-blue-600 uppercase tracking-wider">Target Date</span>
-          <h2 class="text-xl font-black text-slate-800 flex items-center gap-2">
-            <span>📝</span> <span id="selectedDateDisplay"></span>
-          </h2>
-        </div>
-        <div class="flex items-center gap-2">
-          <button onclick="setTodayDate()" class="text-xs font-semibold px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700">今日</button>
-          <input type="date" id="targetDate" onchange="onDateChange()" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:outline-none">
-        </div>
+      <div class="progress-bar-bg">
+        <div id="allocBar" class="progress-bar-fill"></div>
       </div>
-
-      <!-- 朝：配分ポイント状況メーター -->
-      <div class="bg-slate-50 rounded-xl p-3.5 border border-slate-200/80">
-        <div class="flex justify-between items-center mb-1.5 text-xs sm:text-sm">
-          <span class="font-bold text-slate-700">朝のポイント割当状況</span>
-          <span class="font-bold">
-            <span id="allocatedPointsDisplay" class="text-blue-600 text-base">0</span> / 500 pt
-          </span>
-        </div>
-        <!-- プログレスバー -->
-        <div class="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden">
-          <div id="allocationProgressBar" class="h-2.5 rounded-full bg-blue-600 transition-all duration-300" style="width: 0%;"></div>
-        </div>
-        <div id="allocationWarning" class="hidden text-xs font-bold text-rose-600 mt-1.5 flex items-center gap-1">
-          ⚠️ 割り当て合計が1日の上限（500pt）を超えています。配分を調整してください。
-        </div>
+      <div id="allocWarning" style="display:none; color: #dc3545; font-size: 0.75rem; font-weight: bold; margin-top: 4px;">
+        ⚠️ 上限500ptを超過しています。各タスクの配分を調整してください。
       </div>
+    </div>
 
-      <!-- タスク一覧エリア -->
+    <div class="hint">①【朝】タスクと配分ポイントを入力 ➔ ②【夜】充足率ボタン（0〜100%）を選択して保存します。</div>
+
+    <div id="taskList"></div>
+    <button class="add-btn" onclick="addTaskRow()">+ タスクを追加</button>
+
+    <!-- 獲得ポイント表示 -->
+    <div class="score-summary-box">
+      <div style="font-size: 0.85rem; color: #666; margin-bottom: 4px;">本日の確定獲得スコア</div>
       <div>
-        <div class="flex justify-between items-center mb-3">
-          <label class="text-sm font-bold text-slate-700 flex items-center gap-1.5">
-            <span>📋</span> 本日のタスクリスト & 採点
-          </label>
-          <span class="text-xs text-slate-500">※夜に充足率(%)を動かして確定</span>
-        </div>
-
-        <div id="taskList" class="space-y-3">
-          <!-- タスクカードが動的に挿入されます -->
-        </div>
-
-        <button onclick="addTaskRow()" class="mt-3 w-full py-2.5 border-2 border-dashed border-slate-300 rounded-xl text-slate-600 font-semibold text-sm hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50/50 transition flex items-center justify-center gap-1">
-          <span>＋</span> 新しいタスクを追加
-        </button>
+        <span id="resultStamp" class="result-stamp">🌱</span>
+        <span id="totalEarnedScore" class="score-badge">0</span>
+        <span style="font-size: 1.1rem; color: #555;">/ 500 pt</span>
       </div>
+      <div id="stampLabel" style="font-size: 0.9rem; font-weight: bold; color: #555; margin-top: 4px;">未確定</div>
+    </div>
 
-      <!-- 振り返り・メモ欄 -->
-      <div class="pt-2">
-        <label for="dayMemo" class="block text-xs font-bold text-slate-600 mb-1">💬 一日の振り返り・メモ（任意）</label>
-        <textarea id="dayMemo" rows="2" placeholder="良かった点や明日に活かす反省点など..." class="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"></textarea>
-      </div>
-
-      <!-- 夜：確定スコア＆保存ボタン -->
-      <div class="bg-gradient-to-br from-blue-50 to-indigo-50/60 rounded-2xl p-4 sm:p-5 border border-blue-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div>
-          <div class="text-xs font-bold text-slate-500">本日確定獲得ポイント</div>
-          <div class="flex items-baseline gap-2 mt-0.5">
-            <span id="finalStampPreview" class="text-2xl">💤</span>
-            <span id="totalEarnedPoints" class="text-3xl font-black text-blue-700">0</span>
-            <span class="text-sm font-bold text-slate-500">/ 500 pt</span>
-            <span id="achievementRateBadge" class="ml-2 text-xs font-bold px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">0% 達成</span>
-          </div>
-          <div id="evaluationComment" class="text-xs text-slate-600 mt-1">タスクの充足率を入力して保存してください。</div>
-        </div>
-        <button onclick="saveDailyRecord()" class="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition transform active:scale-95 flex items-center justify-center gap-2">
-          <span>💾</span> この日のスコアを確定・保存
-        </button>
-      </div>
-
-      <!-- トースト通知 -->
-      <div id="saveToast" class="hidden text-center p-2.5 bg-emerald-600 text-white font-semibold text-sm rounded-lg shadow-sm">
-        ✔ 保存が完了しました！カレンダーに反映されました。
-      </div>
-
-    </main>
+    <button onclick="saveCurrentDayData()" style="width: 100%; margin-top: 15px; padding: 12px; font-size: 1rem;">この日の実績を保存・更新</button>
   </div>
 
   <script>
-    const STORAGE_KEY_DATA = "daily_self_point_records_v1";
+    const STORAGE_KEY_LOGS = "daily_task_point_eval_logs";
     const MAX_DAILY_POINTS = 500;
+    const RATES = [0, 25, 50, 75, 100];
 
-    let currentYear;
-    let currentMonth;
+    let currentYear, currentMonth;
     let selectedDate = getTodayString();
 
-    // 画面初期化
-    window.onload = function() {
+    window.onload = () => {
       const today = new Date();
       currentYear = today.getFullYear();
       currentMonth = today.getMonth();
@@ -168,227 +168,172 @@
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     }
 
-    function setTodayDate() {
-      selectedDate = getTodayString();
-      document.getElementById("targetDate").value = selectedDate;
-      loadDateData(selectedDate);
-      renderCalendar();
-    }
-
-    function onDateChange() {
-      selectedDate = document.getElementById("targetDate").value;
-      if (!selectedDate) {
-        selectedDate = getTodayString();
-        document.getElementById("targetDate").value = selectedDate;
-      }
-      loadDateData(selectedDate);
-      renderCalendar();
-    }
-
-    // スタンプ基準（500点満点）
-    function getStampInfo(score) {
-      if (score >= 450) return { stamp: "💮", label: "大変よくできました！", color: "text-rose-600" };
-      if (score >= 400) return { stamp: "⭐️", label: "よくできました！", color: "text-amber-500" };
-      if (score >= 300) return { stamp: "👍", label: "合格点達成！", color: "text-blue-600" };
-      if (score >= 150) return { stamp: "🌱", label: "前進しています！", color: "text-emerald-600" };
-      return { stamp: "💤", label: "おつかれさまでした", color: "text-slate-500" };
-    }
-
-    // タスク行の追加
-    function addTaskRow(taskName = "", maxPt = 100, progress = 0) {
+    // タスク行の追加（ボタン式充足率）
+    function addTaskRow(name = "", maxPts = 100, rate = 0) {
       const container = document.getElementById("taskList");
-      const div = document.createElement("div");
-      div.className = "task-row bg-white border border-slate-200 rounded-xl p-3 shadow-xs space-y-2.5 transition hover:border-slate-300";
+      const card = document.createElement("div");
+      card.className = "task-card";
+      card.dataset.rate = rate;
 
-      div.innerHTML = `
-        <div class="flex items-center gap-2">
-          <input type="text" class="task-title flex-1 border border-slate-300 rounded-lg px-2.5 py-1.5 text-sm font-semibold focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="タスク名（例: 論文抄読、仕様書作成）" value="${escapeHtml(taskName)}">
-          <div class="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1">
-            <span class="text-xs text-slate-500 font-bold">上限</span>
-            <input type="number" min="0" max="500" step="5" class="task-max-pt w-16 text-right font-black text-sm bg-transparent focus:outline-none text-slate-800" value="${maxPt}" oninput="recalcAll()">
-            <span class="text-xs font-bold text-slate-600">pt</span>
-          </div>
-          <button onclick="removeTaskRow(this)" class="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg hover:bg-rose-50 transition" title="削除">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-          </button>
+      const rateButtonsHTML = RATES.map(r => `
+        <button type="button" class="rate-btn ${r === rate ? 'active' : ''}" onclick="selectRate(this, ${r})">${r}%</button>
+      `).join("");
+
+      card.innerHTML = `
+        <div class="task-top">
+          <input type="text" class="task-name" placeholder="タスク内容" value="${escapeHtml(name)}" oninput="onDataChanged()">
+          <input type="number" class="task-pts-input" min="0" max="500" step="10" value="${maxPts}" oninput="onDataChanged()" title="上限ポイント">
+          <span style="font-size: 0.85rem; color: #555;">pt</span>
+          <button class="del-btn" onclick="this.closest('.task-card').remove(); onDataChanged();">✕</button>
         </div>
-
-        <!-- 夜：充足率スライダー & 簡単プリセット -->
-        <div class="bg-slate-50/80 rounded-lg p-2.5 border border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div class="flex items-center gap-2 flex-1">
-            <span class="text-xs font-bold text-slate-600 w-12">充足率:</span>
-            <input type="range" min="0" max="100" step="5" value="${progress}" class="task-progress-range flex-1 h-2 bg-slate-200 rounded-lg cursor-pointer" oninput="onProgressSliderChange(this)">
-            <span class="text-xs font-black text-blue-700 w-10 text-right"><span class="progress-val-text">${progress}</span>%</span>
+        <div class="eval-row">
+          <span style="color:#666;">充足率:</span>
+          <div class="rate-btn-group">
+            ${rateButtonsHTML}
           </div>
-
-          <!-- クイックボタン -->
-          <div class="flex items-center gap-1 justify-end">
-            <button type="button" onclick="setQuickProgress(this, 0)" class="text-[11px] font-bold px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-600 hover:bg-slate-100">0%</button>
-            <button type="button" onclick="setQuickProgress(this, 50)" class="text-[11px] font-bold px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-600 hover:bg-slate-100">50%</button>
-            <button type="button" onclick="setQuickProgress(this, 80)" class="text-[11px] font-bold px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-600 hover:bg-slate-100">80%</button>
-            <button type="button" onclick="setQuickProgress(this, 100)" class="text-[11px] font-bold px-1.5 py-0.5 rounded bg-blue-100 border border-blue-200 text-blue-800 hover:bg-blue-200">100%</button>
-            <span class="text-xs font-bold text-slate-400 mx-1">➔</span>
-            <span class="text-xs font-black text-emerald-700 min-w-[55px] text-right"><span class="task-earned-pt">0</span> pt</span>
-          </div>
+          <span class="eval-earned">0 pt</span>
         </div>
       `;
 
-      container.appendChild(div);
-      recalcAll();
+      container.appendChild(card);
+      updateTaskRowScore(card);
+      recalcTotals();
     }
 
-    function removeTaskRow(btn) {
-      btn.closest(".task-row").remove();
-      recalcAll();
+    function selectRate(btn, rate) {
+      const card = btn.closest(".task-card");
+      card.dataset.rate = rate;
+      const group = card.querySelectorAll(".rate-btn");
+      group.forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      
+      updateTaskRowScore(card);
+      recalcTotals();
     }
 
-    function onProgressSliderChange(slider) {
-      const row = slider.closest(".task-row");
-      row.querySelector(".progress-val-text").innerText = slider.value;
-      recalcAll();
+    function updateTaskRowScore(card) {
+      const maxPts = parseInt(card.querySelector(".task-pts-input").value) || 0;
+      const rate = parseInt(card.dataset.rate) || 0;
+      const earned = Math.round((maxPts * rate) / 100);
+      card.querySelector(".eval-earned").innerText = `+${earned} pt`;
     }
 
-    function setQuickProgress(btn, percent) {
-      const row = btn.closest(".task-row");
-      const slider = row.querySelector(".task-progress-range");
-      slider.value = percent;
-      row.querySelector(".progress-val-text").innerText = percent;
-      recalcAll();
+    function onDataChanged() {
+      const cards = document.querySelectorAll(".task-card");
+      cards.forEach(card => updateTaskRowScore(card));
+      recalcTotals();
     }
 
-    // 全タスクの配分合計と確定スコアをリアルタイム再計算
-    function recalcAll() {
-      const rows = document.querySelectorAll(".task-row");
-      let totalAllocated = 0;
+    // 合計ポイント & メーター再計算
+    function recalcTotals() {
+      const cards = document.querySelectorAll(".task-card");
+      let totalAlloc = 0;
       let totalEarned = 0;
 
-      rows.forEach(row => {
-        const maxInput = row.querySelector(".task-max-pt");
-        const progressSlider = row.querySelector(".task-progress-range");
-        const earnedPtSpan = row.querySelector(".task-earned-pt");
-
-        const maxPt = Math.max(0, parseFloat(maxInput.value) || 0);
-        const progress = Math.min(100, Math.max(0, parseFloat(progressSlider.value) || 0));
-
-        // タスク別 獲得ポイント = 上限ポイント * (充足率 / 100)
-        const earned = Math.round(maxPt * (progress / 100));
-        earnedPtSpan.innerText = earned;
-
-        totalAllocated += maxPt;
-        totalEarned += earned;
+      cards.forEach(card => {
+        const maxPts = parseInt(card.querySelector(".task-pts-input").value) || 0;
+        const rate = parseInt(card.dataset.rate) || 0;
+        totalAlloc += maxPts;
+        totalEarned += Math.round((maxPts * rate) / 100);
       });
 
-      // 1日上限500ptにクリップ
-      const finalAllocated = Math.round(totalAllocated);
-      const finalEarned = Math.min(MAX_DAILY_POINTS, Math.round(totalEarned));
+      // 配分メーター更新
+      const allocCounter = document.getElementById("allocCounter");
+      const allocBar = document.getElementById("allocBar");
+      const allocWarning = document.getElementById("allocWarning");
 
-      // 割当メーター表示更新
-      const allocatedDisplay = document.getElementById("allocatedPointsDisplay");
-      const allocationBar = document.getElementById("allocationProgressBar");
-      const warning = document.getElementById("allocationWarning");
+      allocCounter.innerText = `${totalAlloc} / ${MAX_DAILY_POINTS} pt`;
+      const allocPercent = Math.min(100, (totalAlloc / MAX_DAILY_POINTS) * 100);
+      allocBar.style.width = `${allocPercent}%`;
 
-      allocatedDisplay.innerText = finalAllocated;
-      const barPercent = Math.min(100, (finalAllocated / MAX_DAILY_POINTS) * 100);
-      allocationBar.style.width = `${barPercent}%`;
-
-      if (finalAllocated > MAX_DAILY_POINTS) {
-        allocationBar.classList.replace("bg-blue-600", "bg-rose-500");
-        warning.classList.remove("hidden");
-        allocatedDisplay.classList.add("text-rose-600");
+      if (totalAlloc > MAX_DAILY_POINTS) {
+        allocBar.classList.add("over");
+        allocWarning.style.display = "block";
       } else {
-        allocationBar.classList.replace("bg-rose-500", "bg-blue-600");
-        warning.classList.add("hidden");
-        allocatedDisplay.classList.remove("text-rose-600");
+        allocBar.classList.remove("over");
+        allocWarning.style.display = "none";
       }
 
-      // 確定スコア表示更新
-      document.getElementById("totalEarnedPoints").innerText = finalEarned;
-      const stampInfo = getStampInfo(finalEarned);
-      document.getElementById("finalStampPreview").innerText = stampInfo.stamp;
-      document.getElementById("evaluationComment").innerText = stampInfo.label;
+      // 確定スコア（最大500pt）
+      const finalScore = Math.min(MAX_DAILY_POINTS, totalEarned);
+      document.getElementById("totalEarnedScore").innerText = finalScore;
 
-      const achievementRatio = finalAllocated > 0 ? Math.round((finalEarned / finalAllocated) * 100) : 0;
-      document.getElementById("achievementRateBadge").innerText = `${achievementRatio}% 達成`;
+      const stampInfo = getStampInfo(finalScore);
+      document.getElementById("resultStamp").innerText = stampInfo.stamp;
+      document.getElementById("stampLabel").innerText = stampInfo.label;
     }
 
-    // 日付データの読み込み
+    function getStampInfo(score) {
+      if (score >= 450) return { stamp: "💮", label: "完璧！素晴らしい一日！" };
+      if (score >= 380) return { stamp: "⭐️", label: "大変よくできました" };
+      if (score >= 280) return { stamp: "👍", label: "順調・目標達成ライン" };
+      if (score > 0) return { stamp: "🌱", label: "一歩前進・おつかれさまでした" };
+      return { stamp: "💤", label: "未入力または休息日" };
+    }
+
+    // 日付切り替え
+    function onDateChange() {
+      selectedDate = document.getElementById("targetDate").value;
+      loadDateData(selectedDate);
+      renderCalendar();
+    }
+
     function loadDateData(dateStr) {
       document.getElementById("selectedDateDisplay").innerText = dateStr;
       document.getElementById("targetDate").value = dateStr;
 
-      const allData = JSON.parse(localStorage.getItem(STORAGE_KEY_DATA) || "{}");
-      const current = allData[dateStr];
+      const allLogs = JSON.parse(localStorage.getItem(STORAGE_KEY_LOGS) || "{}");
+      const dayData = allLogs[dateStr];
       const container = document.getElementById("taskList");
       container.innerHTML = "";
 
-      if (current && Array.isArray(current.tasks) && current.tasks.length > 0) {
-        current.tasks.forEach(t => {
-          addTaskRow(t.name, t.maxPt, t.progress);
+      if (dayData && dayData.tasks && dayData.tasks.length > 0) {
+        dayData.tasks.forEach(t => {
+          // 最も近いプリセット値にマッピング
+          let matchedRate = 0;
+          if (t.rate !== undefined) {
+            matchedRate = RATES.reduce((prev, curr) => Math.abs(curr - t.rate) < Math.abs(prev - t.rate) ? curr : prev);
+          }
+          addTaskRow(t.name, t.maxPts, matchedRate);
         });
-        document.getElementById("dayMemo").value = current.memo || "";
       } else {
-        // 新規日のデフォルト例
-        addTaskRow("最重要タスク・コア業務", 200, 0);
-        addTaskRow("ミーティング・連絡対応", 150, 0);
-        addTaskRow("スキルアップ・読書・勉強", 150, 0);
-        document.getElementById("dayMemo").value = "";
+        addTaskRow("主業務・重要タスク", 200, 0);
+        addTaskRow("実験・データ整理", 150, 0);
+        addTaskRow("調査・勉強・ミーティング", 150, 0);
       }
-
-      recalcAll();
+      recalcTotals();
     }
 
-    // 確定・保存
-    function saveDailyRecord() {
-      const rows = document.querySelectorAll(".task-row");
+    function saveCurrentDayData() {
+      const cards = document.querySelectorAll(".task-card");
       const tasks = [];
       let totalEarned = 0;
-      let totalAllocated = 0;
 
-      rows.forEach(r => {
-        const name = r.querySelector(".task-title").value.trim() || "無題のタスク";
-        const maxPt = Math.max(0, parseFloat(r.querySelector(".task-max-pt").value) || 0);
-        const progress = Math.min(100, Math.max(0, parseFloat(r.querySelector(".task-progress-range").value) || 0));
-        const earned = Math.round(maxPt * (progress / 100));
-
-        totalAllocated += maxPt;
+      cards.forEach(card => {
+        const name = card.querySelector(".task-name").value.trim();
+        const maxPts = parseInt(card.querySelector(".task-pts-input").value) || 0;
+        const rate = parseInt(card.dataset.rate) || 0;
+        const earned = Math.round((maxPts * rate) / 100);
         totalEarned += earned;
-
-        tasks.push({
-          name: name,
-          maxPt: maxPt,
-          progress: progress,
-          earnedPt: earned
-        });
+        tasks.push({ name, maxPts, rate, earned });
       });
 
       const finalScore = Math.min(MAX_DAILY_POINTS, totalEarned);
-      const memo = document.getElementById("dayMemo").value.trim();
+      const allLogs = JSON.parse(localStorage.getItem(STORAGE_KEY_LOGS) || "{}");
 
-      const allData = JSON.parse(localStorage.getItem(STORAGE_KEY_DATA) || "{}");
-      allData[selectedDate] = {
-        date: selectedDate,
-        totalScore: finalScore,
-        totalAllocated: totalAllocated,
-        memo: memo,
+      allLogs[selectedDate] = {
         tasks: tasks,
+        score: finalScore,
         updatedAt: new Date().toISOString()
       };
 
-      localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(allData));
-
-      // カレンダーと集計の更新
+      localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(allLogs));
       renderCalendar();
       updateTotalStats();
-
-      // トースト通知を表示
-      const toast = document.getElementById("saveToast");
-      toast.classList.remove("hidden");
-      setTimeout(() => {
-        toast.classList.add("hidden");
-      }, 2500);
+      alert(`「${selectedDate}」の実績（${finalScore} pt）を保存しました。`);
     }
 
-    // カレンダーの描画
+    // カレンダー & 集計
     function changeMonth(diff) {
       currentMonth += diff;
       if (currentMonth < 0) {
@@ -402,81 +347,70 @@
     }
 
     function renderCalendar() {
-      document.getElementById("calendarTitle").innerText = `${currentYear}年 ${currentMonth + 1}月`;
+      const title = document.getElementById("calendarTitle");
+      title.innerText = `${currentYear}年 ${currentMonth + 1}月`;
+
       const grid = document.getElementById("calendarGrid");
       grid.innerHTML = "";
 
-      const daysOfWeek = ["日", "月", "火", "水", "木", "金", "土"];
-      daysOfWeek.forEach((d, idx) => {
-        const color = idx === 0 ? "text-rose-500" : (idx === 6 ? "text-blue-500" : "text-slate-500");
-        grid.innerHTML += `<div class="text-[11px] font-bold py-1 ${color}">${d}</div>`;
+      const days = ["日", "月", "火", "水", "木", "金", "土"];
+      days.forEach(d => {
+        grid.innerHTML += `<div class="cal-day-label">${d}</div>`;
       });
 
-      const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
+      const firstDay = new Date(currentYear, currentMonth, 1).getDay();
       const lastDate = new Date(currentYear, currentMonth + 1, 0).getDate();
-      const allData = JSON.parse(localStorage.getItem(STORAGE_KEY_DATA) || "{}");
+      const allLogs = JSON.parse(localStorage.getItem(STORAGE_KEY_LOGS) || "{}");
 
-      // 先頭の空セル
-      for (let i = 0; i < firstDayIndex; i++) {
-        grid.innerHTML += `<div class="cal-cell bg-transparent"></div>`;
+      for (let i = 0; i < firstDay; i++) {
+        grid.innerHTML += `<div class="cal-cell empty"></div>`;
       }
 
-      // 日付セル
-      for (let day = 1; day <= lastDate; day++) {
-        const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-        const record = allData[dateStr];
-        const isSelected = dateStr === selectedDate;
+      for (let d = 1; d <= lastDate; d++) {
+        const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const log = allLogs[dateStr];
+        const isSelected = dateStr === selectedDate ? "selected" : "";
 
-        let stampHtml = "";
-        if (record && typeof record.totalScore === "number") {
-          const stampInfo = getStampInfo(record.totalScore);
-          stampHtml = `
-            <div class="flex flex-col items-center leading-none mt-1">
-              <span class="text-sm">${stampInfo.stamp}</span>
-              <span class="text-[10px] font-extrabold text-slate-700 mt-0.5">${record.totalScore}<span class="text-[8px]">pt</span></span>
+        let stampHTML = "";
+        if (log && typeof log.score === "number") {
+          const stampInfo = getStampInfo(log.score);
+          stampHTML = `
+            <div class="stamp-container">
+              <span class="cal-stamp">${stampInfo.stamp}</span>
+              <span class="cal-score-num">${log.score}pt</span>
             </div>
           `;
         }
 
-        const selectedClass = isSelected 
-          ? "border-2 border-blue-600 bg-blue-50/70 shadow-sm" 
-          : "border border-slate-200/80 bg-white hover:bg-slate-50";
-
         const cell = document.createElement("div");
-        cell.className = `cal-cell rounded-lg p-1 flex flex-col justify-between items-center cursor-pointer ${selectedClass}`;
-        cell.innerHTML = `
-          <span class="text-xs font-semibold text-slate-700">${day}</span>
-          ${stampHtml}
-        `;
-
+        cell.className = `cal-cell ${isSelected}`;
+        cell.innerHTML = `<span>${d}</span>${stampHTML}`;
         cell.onclick = () => {
           selectedDate = dateStr;
           loadDateData(dateStr);
           renderCalendar();
         };
-
         grid.appendChild(cell);
       }
     }
 
-    // 年間・月間の合計ポイント集計
     function updateTotalStats() {
-      const allData = JSON.parse(localStorage.getItem(STORAGE_KEY_DATA) || "{}");
+      const allLogs = JSON.parse(localStorage.getItem(STORAGE_KEY_LOGS) || "{}");
       let monthTotal = 0;
       let yearTotal = 0;
 
       const now = new Date();
-      const thisYear = String(now.getFullYear());
+      const thisYear = now.getFullYear();
       const thisMonth = String(now.getMonth() + 1).padStart(2, '0');
 
-      document.getElementById("currentMonthLabel").innerText = `${now.getMonth() + 1}月の獲得ポイント`;
-      document.getElementById("currentYearLabel").innerText = `${thisYear}年の獲得ポイント`;
+      document.getElementById("currentMonthLabel").innerText = `${now.getMonth() + 1}月`;
+      document.getElementById("currentYearLabel").innerText = `${thisYear}年`;
 
-      Object.keys(allData).forEach(dateStr => {
+      Object.keys(allLogs).forEach(dateStr => {
         const [y, m] = dateStr.split("-");
-        const score = allData[dateStr].totalScore || 0;
+        const score = allLogs[dateStr]?.score || 0;
 
-        if (y === thisYear) {
+        if (parseInt(y) === thisYear) {
           yearTotal += score;
           if (m === thisMonth) {
             monthTotal += score;
@@ -484,21 +418,56 @@
         }
       });
 
-      document.getElementById("monthTotalScore").innerText = `${monthTotal.toLocaleString()} pt`;
-      document.getElementById("yearTotalScore").innerText = `${yearTotal.toLocaleString()} pt`;
+      document.getElementById("monthTotalScore").innerText = `${monthTotal} pt`;
+      document.getElementById("yearTotalScore").innerText = `${yearTotal} pt`;
+    }
+
+    // バックアップ機能
+    function exportData() {
+      const allLogs = localStorage.getItem(STORAGE_KEY_LOGS) || "{}";
+      const blob = new Blob([allLogs], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const today = getTodayString();
+      a.href = url;
+      a.download = `daily_task_backup_${today}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (typeof parsed !== "object" || parsed === null) {
+            throw new Error("無効なJSONフォーマットです");
+          }
+
+          if (confirm("バックアップデータを読み込みますか？\n（現在のデータは統合・上書きされます）")) {
+            const currentLogs = JSON.parse(localStorage.getItem(STORAGE_KEY_LOGS) || "{}");
+            const merged = { ...currentLogs, ...parsed };
+            localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(merged));
+            loadDateData(selectedDate);
+            renderCalendar();
+            updateTotalStats();
+            alert("データの復元が完了しました。");
+          }
+        } catch (err) {
+          alert("ファイルの読み込みに失敗しました: " + err.message);
+        }
+        event.target.value = "";
+      };
+      reader.readAsText(file);
     }
 
     function escapeHtml(str) {
-      if (!str) return "";
-      return str.replace(/[&<>"']/g, function(m) {
-        return {
-          '&': '&amp;',
-          '<': '&lt;',
-          '>': '&gt;',
-          '"': '&quot;',
-          "'": '&#39;'
-        }[m];
-      });
+      return (str || "").replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
     }
   </script>
 </body>
